@@ -1,0 +1,15 @@
+# Ignore Terraform state files and logs
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+
+# Ignore Terraform plan files
+*.tfplan
+
+# Ignore Terraform cache and providers folder
+.terraform/
+
+# Ignore override files
+override.tf
+override.tf.json
