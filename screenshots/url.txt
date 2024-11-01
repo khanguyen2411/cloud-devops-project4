@@ -1,0 +1,2 @@
+Frontend: http://a0f87c397219046bf93b9ef8c12c220c-600915946.us-east-1.elb.amazonaws.com/
+Backend: http://afe433ca9643741baa1722d56f0d3b6a-290639332.us-east-1.elb.amazonaws.com/
