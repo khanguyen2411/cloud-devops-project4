@@ -1,24 +1,28 @@
-FROM  public.ecr.aws/docker/library/node:18.14.2-alpine3.17
+FROM public.ecr.aws/docker/library/node:18.14.2-alpine3.17
 
 ARG REACT_APP_MOVIE_API_URL
 ENV REACT_APP_MOVIE_API_URL=${REACT_APP_MOVIE_API_URL}
 
 WORKDIR /app
 
-# Copy dependdency files
+# Copy dependency files
 COPY package*.json ./
 
 # Install packages
-RUN npm ci
+RUN npm install
 
 # Copy code
 COPY . .
 
-# Build the app
+# Update caniuse-lite
+RUN npx update-browserslist-db@latest --force
+
+# Build the app without failing on linting warnings
 RUN npm run build
 
 # Expose the port used by the React app
 EXPOSE 3000
 
-# Start the React app when the container starts
-CMD ["npm", "run", "serve"]
+# Install serve and start the React app
+RUN npm install -g serve
+CMD ["serve", "-s", "build"]

@@ -1,4 +1,4 @@
-name: Frontend Continuous Integration
+name: Frontend CI
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ env:
 jobs:
 
   lint:
-    name: Frontend Linting
+    name: Linting
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,13 +23,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Cache Node.js dependencies
+      - name: Cache Node modules
         uses: actions/cache@v3
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('frontend/package-lock.json') }}
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            npm-
+            node-modules-
 
       - name: Install dependencies
         run: |
@@ -40,7 +40,7 @@ jobs:
           npm run lint -- --fix
 
   test:
-    name: Frontend Testing
+    name: Testing
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -49,13 +49,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Cache Node.js dependencies
+      - name: Cache Node modules
         uses: actions/cache@v3
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('frontend/package-lock.json') }}
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            npm-
+            node-modules-
             
       - name: Install dependencies
         run: |
@@ -66,7 +66,7 @@ jobs:
           npm run test
 
   build:
-    name: Build & Push Docker image
+    name: Build Docker Image
     runs-on: ubuntu-latest
     needs: [lint, test]
     defaults:
@@ -100,13 +100,6 @@ jobs:
           IMAGE_TAG: latest
         run: |
           aws eks update-kubeconfig --name cluster
-          export EXTERNALIP=$(kubectl get svc backend -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}')
-          echo $EXTERNALIP
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --build-arg=REACT_APP_MOVIE_API_URL=http://$EXTERNALIP .
-          docker images
-
-      - name: Cache Docker image
-        uses: actions/cache@v3
-        with:
-          path: ~/docker-cache
-          key: docker-${{ github.sha }}-frontend
+          export BACKEND_URL=$(kubectl get svc backend -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}')
+          echo $BACKEND_URL
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --build-arg=REACT_APP_MOVIE_API_URL=http://$BACKEND_URL .

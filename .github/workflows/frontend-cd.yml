@@ -1,4 +1,4 @@
-name: Frontend Continuous Deployment
+name: Frontend CD
 
 on:
   workflow_dispatch:
@@ -65,18 +65,11 @@ jobs:
           REPOSITORY: frontend
           IMAGE_TAG: latest
         run: |
-          echo "Registry: $REGISTRY"
-          echo "Repository: $REPOSITORY"
-          echo "Image Tag: $IMAGE_TAG"
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker images
+          aws eks update-kubeconfig --name cluster
+          export BACKEND_URL=$(kubectl get svc backend -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}')
+          echo $BACKEND_URL
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG --build-arg=REACT_APP_MOVIE_API_URL=http://$BACKEND_URL .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-      - name: Cache Docker image
-        uses: actions/cache@v3
-        with:
-          path: ~/docker-cache
-          key: docker-${{ github.sha }}-frontend
 
   deploy:
     name: Deploy to EKS
